@@ -1,16 +1,30 @@
+var area = null;
+
 let canvas = document.getElementById("canvas");
 let ctx = canvas.getContext("2d");
+
 let selectedShape = null;
+
 let mouseX = 0;
 let mouseY = 0;
 
+function resizeCanvas() {
+    canvas.width = area.width;
+    canvas.height = area.height;
+}
+
 window.addEventListener("load", function () {
-    canvas.width = canvas.offsetWidth;
-    canvas.height = canvas.offsetHeight;
+    requestAnimationFrame(resizeCanvas);
+    area = canvas.getBoundingClientRect();
 });
 
 function onCircButtonPressed() {
     selectedShape = "circ";
+    console.log(mesh);
+}
+
+function onRectButtonPressed() {
+    selectedShape = "rect";
     console.log(mesh);
 }
 
@@ -22,45 +36,57 @@ canvas.addEventListener("click", function (event) {
     mouseX = event.clientX - rect.left;
     mouseY = event.clientY - rect.top;
 
-    //ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = "#a20";
+    var letter = "A";
+
+    if (mesh.objA.defined == true) {
+        letter = "B";
+    }
+    if (mesh.objB.defined == true) {
+        return;
+    }
+    let obj = mesh["obj" + letter];
 
     if (selectedShape == "circ") {
         var radius = 40;
-        var letter = "A";
-
-        if (mesh.objA.defined == true) {
-            letter = "B";
-        }
-        if (mesh.objB.defined == true) {
-            return;
-        }
 
         ctx.beginPath();
-
         ctx.arc(mouseX, mouseY, radius, 0, 2 * Math.PI);
         ctx.fill();
 
-        let obj = mesh["obj" + letter];
-        if (!obj.defined) {
-            obj.pos = [mouseX, mouseY];
-            obj.size = radius;
-            obj.objId = "circ";
-            obj.defined = true;
-        }
+        obj.posX = mouseX;
+        obj.posY = mouseY;
+        obj.size = radius;
+        obj.objId = "circ";
+        obj.defined = true;
+
+        console.log(obj);
+    }
+
+    if (selectedShape == "rect") {
+        ctx.fillRect(mouseX, mouseY, 70, 50);
+
+        obj.posX = mouseX;
+        obj.posY = mouseY;
+        obj.size = [70, 50];
+        obj.objId = "rect";
+        obj.defined = true;
+
         console.log(obj);
     }
 });
 
 let mesh = {
     objA: {
-        pos: [0, 0],
+        posX: 0,
+        posY: 0,
         size: 0,
         objId: "",
         defined: false,
     },
     objB: {
-        pos: [0, 0],
+        posX: 0,
+        posY: 0,
         size: 0,
         objId: "",
     },
@@ -93,14 +119,11 @@ let mesh = {
     // COLLISION FUNCTIONS
     // ===================
 
-    CS(a, b) {
+    CC(a, b) {
         return;
     },
 
-    CC(a, b) {
-        console.log("CC called!");
-        return;
-    },
+    CS(a, b) {},
 
     SS(a, b) {
         return;
