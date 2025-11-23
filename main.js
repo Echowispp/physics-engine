@@ -3,6 +3,8 @@ var area = null;
 let canvas = document.getElementById("canvas");
 let ctx = canvas.getContext("2d");
 
+let p = document.getElementById("resultParagraph");
+
 let selectedShape = null;
 
 let mouseX = 0;
@@ -25,6 +27,10 @@ function onCircButtonPressed() {
 function onRectButtonPressed() {
     selectedShape = "rect";
 }
+
+// =============
+// SHAPE DRAWING
+// =============
 
 canvas.addEventListener("click", function (event) {
     if (!selectedShape) {
@@ -75,6 +81,7 @@ canvas.addEventListener("click", function (event) {
 });
 
 let mesh = {
+    //inside a mesh (technically called an 'object' in javascript slang) for easier expansion later on
     objA: {
         posX: 0, // doing positions outside of arrays because I feel it's simpler for me to understand, it is slightly less efficient though
         posY: 0,
@@ -90,25 +97,46 @@ let mesh = {
     },
 
     doCollisions() {
+        let collision = "";
         switch (this.objA.objId + ":" + this.objB.objId) {
             case "circ:circ": {
-                this.CC(this.objA, this.objB);
+                collision = this.CC(this.objA, this.objB);
                 break;
             }
 
             case "circ:rect": {
-                this.CS(this.objA, this.objB);
+                collision = this.CR(this.objA, this.objB);
                 break;
             }
 
             case "rect:circ": {
-                this.CS(this.objB, this.objA);
+                collision = this.CR(this.objB, this.objA);
                 break;
             }
 
             case "rect:rect": {
-                this.SS(this.objA, this.objB);
+                collision = this.RR(this.objA, this.objB);
                 break;
+            }
+        }
+        switch (collision) {
+            case "circ:circ": {
+                p.textContent =
+                    "Detected circle-circle collision! Refresh to reset";
+                break;
+            }
+            case "circ:rect": {
+                p.textContent =
+                    "Detected circle-rectangle collision! Refresh to reset";
+                break;
+            }
+            case "rect:rect": {
+                p.textContent =
+                    "Detected rectangle-rectangle collision! Refresh to reset";
+                break;
+            }
+            default: {
+                p.textContent = "No collision detected! Refresh to reset";
             }
         }
     },
@@ -131,21 +159,11 @@ let mesh = {
         const hypot = Math.sqrt(dX * dX + dY * dY);
 
         if (hypot < radii) {
-            console.log("circles colliding!");
+            return "circ:circ";
         }
     },
 
-    /*CS(a, b) {
-        let rectTL = [b.posX, b.posY];
-        let rectTR = [...rectTL];
-        rectTR[0] += b.size[0];
-        let rectBL = [...rectTL];
-        rectBL[1] -= size[1];
-        let rectBR = [...rectTR];
-        rectBR[1] -= size[1];
-    },*/
-
-    CS(a, b) {
+    CR(a, b) {
         const rectTL = [b.posX, b.posY];
         const rectTR = [b.posX + b.size[0], b.posY];
         const rectBL = [b.posX, b.posY + b.size[1]];
@@ -182,11 +200,11 @@ let mesh = {
         const hypot = Math.sqrt(dx * dx + dy * dy);
 
         if (hypot < a.size) {
-            console.log("circle and rect colliding!");
+            return "circ:rect";
         }
     },
 
-    SS(a, b) {
+    RR(a, b) {
         let aRectTL = [a.posX, a.posY];
         let aRectTR = [a.posX + a.size[0], a.posY];
         let aRectBL = [a.posX, a.posY + a.size[1]];
@@ -203,26 +221,31 @@ let mesh = {
 
         console.log(rectA, rectB);
         for (corner of rectA) {
+            // check each corner
             if (
+                //is that corner inside the other rectangle
                 corner[0] > bRectTL[0] &&
                 corner[0] < bRectTR[0] &&
                 corner[1] < bRectBL[1] &&
                 corner[1] > bRectTL[1]
             ) {
-                console.log("rects colliding!");
+                return "rect:rect";
             }
         }
-        for (let corner of [bRectTL, bRectTR, bRectBL, bRectBR]) {
+        for (let corner of rectB) {
+            // same here
             if (
                 corner[0] > aRectTL[0] &&
                 corner[0] < aRectTR[0] &&
                 corner[1] > aRectTL[1] &&
                 corner[1] < aRectBL[1]
             ) {
-                console.log("rects colliding!");
+                return "rect:rect";
             }
         }
     },
+
+    // This is here purely for if I continue expanding this project to polygons, does nothing at the moment
 
     /*isInside(edges, xp, yp) {
         let cnt = 0;

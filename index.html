@@ -5,14 +5,25 @@
         <script src="main.js" defer></script>
     </head>
     <body>
-        <div class="main">
-            <button class="circButton" onclick="onCircButtonPressed()">
-                Select shape: circle
-            </button>
-            <button class="rectButton" onclick="onRectButtonPressed()">
-                Select shape: rectangle
-            </button>
-            <canvas id="canvas" class="mainCanvas"></canvas>
+        <div class="blockContainer">
+            <p class="textBody">
+                Guide to using this tool: first, select a shape. Then, click on
+                the canvas (the gray area). Either click again or select a
+                different shape. Once you've placed thje second shape, the
+                program will tell you if they're colliding.
+            </p>
+            <p id="resultParagraph" class="textBody">
+                The results will appear here
+            </p>
+            <div class="main">
+                <button class="circButton" onclick="onCircButtonPressed()">
+                    Select shape: circle
+                </button>
+                <button class="rectButton" onclick="onRectButtonPressed()">
+                    Select shape: rectangle
+                </button>
+                <canvas id="canvas" class="mainCanvas"></canvas>
+            </div>
         </div>
     </body>
 </html>
