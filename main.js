@@ -6,11 +6,14 @@ let canvas = document.getElementById("canvas");
 let ctx = canvas.getContext("2d");
 
 let resultParagraph = document.getElementById("resultParagraph");
+let toggleParagraph = document.getElementById("toggleParagraph");
 
 let selectedShape = null;
 
 let mouseX = 0;
 let mouseY = 0;
+
+let gravityToggle = true;
 
 //=========
 // PHYSICS
@@ -29,7 +32,7 @@ function doPhysics() {
 			 Type: ${shape.objId}, 
 			 Grounded: ${shape.onGround}`
 		);*/
-		if (shape.onGround == false) {
+		if (shape.onGround == false && shape.gravity == true) {
 			shape.velocityY += gravity;
 		}
 
@@ -114,6 +117,18 @@ function onRectButtonPressed() {
 	selectedShape = "rect";
 }
 
+function toggleGravity() {
+	console.log(`button pressed, gravityToggle pre-changes: ${gravityToggle}`);
+	if (gravityToggle == true) {
+		gravityToggle = false;
+	} else if (gravityToggle == false) {
+		gravityToggle = true;
+	}
+	console.log(`button pressed, gravityToggle post-changes: ${gravityToggle}`);
+
+	toggleParagraph.textContent = `Gravity for next placed object: ${gravityToggle}`;
+}
+
 // ===============
 //  SHAPE DRAWING
 // ===============
@@ -151,6 +166,7 @@ canvas.addEventListener("click", function (event) {
 		velocityX: null,
 		velocityY: null,
 		onGround: false,
+		gravity: gravityToggle,
 	};
 
 	shapes.push(object);
@@ -246,12 +262,6 @@ function CC(a, b) {
 	const radii = a.size + b.size;
 
 	const hypot = Math.sqrt(dX * dX + dY * dY);
-
-	console.log(
-		`Checking circles: distance=${hypot.toFixed(
-			2
-		)}, radii sum=${radii}, colliding=${hypot < radii}`
-	);
 
 	if (hypot < radii) {
 		return "circ:circ";

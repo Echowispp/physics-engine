@@ -1,52 +1,63 @@
 body {
-    background-color: #222;
-    font-family: Arial;
+	background-color: #222;
+	font-family: Arial;
 }
 
 .blockContainer {
-    align-items: center;
-    gap: 10px;
+	/*align-items: center;*/
+	gap: 10px;
 }
 
 .main {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: auto 1fr;
-    gap: 10px;
-    height: 90vh;
-    width: 90vw;
-    background-color: #444;
-    padding: 50px;
-    box-sizing: border-box;
-    margin: 0 auto;
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	grid-template-rows: auto auto 1fr;
+	gap: 10px;
+	height: 90vh;
+	width: 90vw;
+	background-color: #444;
+	padding: 50px;
+	box-sizing: border-box;
+	margin: 0 auto;
 }
 
 .textBody {
-    color: #aaa;
-    padding: 30px;
-    background-color: #333;
-    width: 90vw;
-    box-sizing: border-box;
-    margin: 20px auto;
+	color: #aaa;
+	padding: 30px;
+	background-color: #333;
+	width: 90vw;
+	box-sizing: border-box;
+	margin: 20px auto;
+}
+
+button {
+	padding: 20px;
+	font-size: 16px;
 }
 
 .circButton {
-    grid-column: 1;
-    grid-row: 1;
-    padding: 20px;
-    font-size: 16px;
+	grid-column: 1;
+	grid-row: 2;
 }
 .rectButton {
-    grid-column: 2;
-    grid-row: 1;
-    padding: 20px;
-    font-size: 16px;
+	grid-column: 2;
+	grid-row: 2;
+}
+
+.gravityToggle {
+	grid-column: 1;
+	grid-row: 1;
+}
+
+#toggleParagraph {
+	grid-column: 2;
+	grid-row: 1;
 }
 
 .mainCanvas {
-    grid-column: 1 / -1;
-    grid-row: 2;
-    background-color: #666;
-    width: 100%;
-    height: 100%;
+	grid-column: 1 / -1;
+	grid-row: 3;
+	background-color: #666;
+	width: 100%;
+	height: 100%;
 }
