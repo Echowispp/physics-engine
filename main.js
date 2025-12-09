@@ -77,10 +77,20 @@ canvas.addEventListener("click", function (event) {
 		object.objId = "rect";
 		object.defined = true;
 	}
-	if (mesh.shapes.length >= 2) {
-		// basically, if this is the second time around
-		mesh.doCollisions();
+
+	let totalCollisions = 0;
+
+	for (let i = 0; i < mesh.shapes.length; i++) {
+		for (let j = i + 1; j < mesh.shapes.length; j++) {
+			// if check so stuff doesnt collide with itself
+			totalCollisions += mesh.doCollisions(
+				mesh.shapes[i],
+				mesh.shapes[j]
+			);
+		}
 	}
+	console.log("total collisions: ", totalCollisions);
+	resultParagraph.textContent = `Total collisions: ${totalCollisions}`;
 });
 
 let mesh = {
@@ -103,49 +113,33 @@ let mesh = {
     },
     */
 
-	doCollisions() {
+	doCollisions(object1, object2) {
 		let collision = "";
-		switch (this.shapes[0].objId + ":" + this.shapes[1].objId) {
+		switch (object1.objId + ":" + object2.objId) {
 			case "circ:circ": {
-				collision = this.CC(this.shapes[0], this.shapes[1]);
+				collision = this.CC(object1, object2);
 				break;
 			}
 
 			case "circ:rect": {
-				collision = this.CR(this.shapes[0], this.shapes[1]);
+				collision = this.CR(object1, object2);
 				break;
 			}
 
 			case "rect:circ": {
-				collision = this.CR(this.shapes[1], this.shapes[0]);
+				collision = this.CR(object2, object1);
 				break;
 			}
 
 			case "rect:rect": {
-				collision = this.RR(this.shapes[0], this.shapes[1]);
+				collision = this.RR(object1, object2);
 				break;
 			}
 		}
-		switch (collision) {
-			case "circ:circ": {
-				resultParagraph.textContent =
-					"Detected circle-circle collision! Refresh to reset";
-				break;
-			}
-			case "circ:rect": {
-				resultParagraph.textContent =
-					"Detected circle-rectangle collision! Refresh to reset";
-				break;
-			}
-			case "rect:rect": {
-				resultParagraph.textContent =
-					"Detected rectangle-rectangle collision! Refresh to reset";
-				break;
-			}
-			default: {
-				resultParagraph.textContent =
-					"No collision detected! Refresh to reset";
-			}
+		if (collision != "") {
+			return 1;
+		} else {
+			return 0;
 		}
 	},
 
