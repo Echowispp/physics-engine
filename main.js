@@ -12,15 +12,99 @@ let selectedShape = null;
 let mouseX = 0;
 let mouseY = 0;
 
+//=========
+// PHYSICS
+//=========
+
+const gravity = 0.5;
+
+function doPhysics() {
+	for (let shape of mesh.shapes) {
+		/*console.log(
+			`Shape pre physics:
+
+			Position: (${shape.posX}, ${shape.posY}),
+			 Velocity: (${shape.velocityX}, ${shape.velocityY}), 
+			 Size: ${shape.size}, 
+			 Type: ${shape.objId}, 
+			 Grounded: ${shape.onGround}`
+		);*/
+		if (shape.onGround == false) {
+			shape.velocityY += gravity;
+		}
+
+		if (shape.objId == "circ") {
+			shape.posX = Math.min(
+				shape.posX + shape.velocityX,
+				canvas.width - shape.size
+			);
+			shape.posY = Math.min(
+				shape.posY + shape.velocityY,
+				canvas.height - shape.size
+			);
+			if (shape.posY <= canvas.height - shape.size) {
+				shape.onground = true;
+			}
+		}
+
+		if (shape.objId == "rect") {
+			shape.posX = Math.min(
+				shape.posX + shape.velocityX,
+				canvas.width - shape.size[0]
+			);
+			shape.posY = Math.min(
+				shape.posY + shape.velocityY,
+				canvas.height - shape.size[1]
+			);
+			if (shape.posY <= canvas.height - shape.size[1]) {
+				shape.onground = true;
+			}
+			if (shape.posX <= canvas.width - shape.size[0]) {
+				console.log("out of bounds!");
+			}
+		}
+		/*console.log(
+			`Shape post physics:
+
+			Position: (${shape.posX}, ${shape.posY}),
+			 Velocity: (${shape.velocityX}, ${shape.velocityY}), 
+			 Size: ${shape.size}, 
+			 Type: ${shape.objId}
+			 Grounded: ${shape.onGround}`
+		);*/
+	}
+}
+
+//=========
+//  SETUP
+//=========
+
 function resizeCanvas() {
 	const area = canvas.getBoundingClientRect();
 	canvas.width = area.width;
 	canvas.height = area.height;
 }
 
-window.addEventListener("load", function () {
+window.addEventListener("load", () => {
 	requestAnimationFrame(resizeCanvas);
+	requestAnimationFrame(loop);
 });
+
+function loop() {
+	requestAnimationFrame(loop);
+
+	//console.log(`
+	//	New frame!
+	//	`);
+
+	mesh.doCollisions();
+	doPhysics();
+	reDraw();
+}
+
+//=======
+// INPUT
+//=======
 
 function onCircButtonPressed() {
 	selectedShape = "circ";
@@ -30,14 +114,29 @@ function onRectButtonPressed() {
 	selectedShape = "rect";
 }
 
-// =============
-// SHAPE DRAWING
-// =============
+// ===============
+//  SHAPE DRAWING
+// ===============
+
+function reDraw() {
+	ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+	for (shape of mesh.shapes) {
+		if (shape.objId == "circ") {
+			ctx.beginPath();
+			ctx.arc(shape.posX, shape.posY, shape.size, 0, 2 * Math.PI);
+			ctx.fill();
+		} else if (shape.objId == "rect") {
+			ctx.fillRect(shape.posX, shape.posY, shape.size[0], shape.size[1]);
+		}
+	}
+}
 
 canvas.addEventListener("click", function (event) {
 	if (!selectedShape) {
 		return;
 	}
+
 	const rect = canvas.getBoundingClientRect();
 	mouseX = event.clientX - rect.left;
 	mouseY = event.clientY - rect.top;
@@ -49,7 +148,9 @@ canvas.addEventListener("click", function (event) {
 		posY: null,
 		size: null,
 		objId: null,
-		defined: false,
+		velocityX: null,
+		velocityY: null,
+		onGround: false,
 	};
 
 	mesh.shapes.push(object);
@@ -65,32 +166,21 @@ canvas.addEventListener("click", function (event) {
 		object.posY = mouseY;
 		object.size = radius;
 		object.objId = "circ";
-		object.defined = true;
-	}
+		object.velocityX = 0;
+		object.velocityY = 0;
+	} else if (selectedShape == "rect") {
+		let sizeX = 70;
+		let sizeY = 50;
 
-	if (selectedShape == "rect") {
-		ctx.fillRect(mouseX, mouseY, 70, 50);
+		ctx.fillRect(mouseX, mouseY, sizeX, sizeY);
 
 		object.posX = mouseX;
 		object.posY = mouseY;
-		object.size = [70, 50];
+		object.size = [sizeX, sizeY];
 		object.objId = "rect";
-		object.defined = true;
+		object.velocityX = 0;
+		object.velocityY = 0;
 	}
-
-	let totalCollisions = 0;
-
-	for (let i = 0; i < mesh.shapes.length; i++) {
-		for (let j = i + 1; j < mesh.shapes.length; j++) {
-			// if check so stuff doesnt collide with itself
-			totalCollisions += mesh.doCollisions(
-				mesh.shapes[i],
-				mesh.shapes[j]
-			);
-		}
-	}
-	console.log("total collisions: ", totalCollisions);
-	resultParagraph.textContent = `Total collisions: ${totalCollisions}`;
 });
 
 let mesh = {
@@ -103,7 +193,6 @@ let mesh = {
         posY: 0,
         size: 0,
         objId: "",
-        defined: false,
     },
     objB: {
         posX: 0,
@@ -113,34 +202,39 @@ let mesh = {
     },
     */
 
-	doCollisions(object1, object2) {
-		let collision = "";
-		switch (object1.objId + ":" + object2.objId) {
-			case "circ:circ": {
-				collision = this.CC(object1, object2);
-				break;
-			}
+	doCollisions() {
+		let totalCollisions = 0;
 
-			case "circ:rect": {
-				collision = this.CR(object1, object2);
-				break;
-			}
+		for (let i = 0; i < mesh.shapes.length; i++) {
+			for (let j = i + 1; j < mesh.shapes.length; j++) {
+				let collision = "";
+				switch (mesh.shapes[i].objId + ":" + mesh.shapes[j].objId) {
+					case "circ:circ": {
+						collision = this.CC(mesh.shapes[i], mesh.shapes[j]);
+						break;
+					}
 
-			case "rect:circ": {
-				collision = this.CR(object2, object1);
-				break;
-			}
+					case "circ:rect": {
+						collision = this.CR(mesh.shapes[i], mesh.shapes[j]);
+						break;
+					}
 
-			case "rect:rect": {
-				collision = this.RR(object1, object2);
-				break;
+					case "rect:circ": {
+						collision = this.CR(mesh.shapes[j], mesh.shapes[i]);
+						break;
+					}
+
+					case "rect:rect": {
+						collision = this.RR(mesh.shapes[i], mesh.shapes[j]);
+						break;
+					}
+				}
+				if (!(collision == "")) {
+					totalCollisions += 1;
+				}
 			}
 		}
-		if (collision != "") {
-			return 1;
-		} else {
-			return 0;
-		}
+		resultParagraph.textContent = `Total collisions: ${totalCollisions}`;
 	},
 
 	// ===================
@@ -155,8 +249,16 @@ let mesh = {
 
 		const hypot = Math.sqrt(dX * dX + dY * dY);
 
+		console.log(
+			`Checking circles: distance=${hypot.toFixed(
+				2
+			)}, radii sum=${radii}, colliding=${hypot < radii}`
+		);
+
 		if (hypot < radii) {
 			return "circ:circ";
+		} else {
+			return "";
 		}
 	},
 
@@ -199,6 +301,8 @@ let mesh = {
 
 		if (hypot < a.size) {
 			return "circ:rect";
+		} else {
+			return "";
 		}
 	},
 
@@ -249,5 +353,6 @@ let mesh = {
 				return "rect:rect";
 			}
 		}
+		return "";
 	},
 };
