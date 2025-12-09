@@ -19,7 +19,7 @@ let mouseY = 0;
 const gravity = 0.5;
 
 function doPhysics() {
-	for (let shape of mesh.shapes) {
+	for (let shape of shapes) {
 		/*console.log(
 			`Shape pre physics:
 
@@ -97,7 +97,7 @@ function loop() {
 	//	New frame!
 	//	`);
 
-	mesh.doCollisions();
+	doCollisions();
 	doPhysics();
 	reDraw();
 }
@@ -121,7 +121,7 @@ function onRectButtonPressed() {
 function reDraw() {
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-	for (shape of mesh.shapes) {
+	for (let shape of shapes) {
 		if (shape.objId == "circ") {
 			ctx.beginPath();
 			ctx.arc(shape.posX, shape.posY, shape.size, 0, 2 * Math.PI);
@@ -153,7 +153,7 @@ canvas.addEventListener("click", function (event) {
 		onGround: false,
 	};
 
-	mesh.shapes.push(object);
+	shapes.push(object);
 
 	if (selectedShape == "circ") {
 		var radius = 40;
@@ -183,11 +183,9 @@ canvas.addEventListener("click", function (event) {
 	}
 });
 
-let mesh = {
-	//inside a mesh (technically called an object literal in javascript slang) for easier expansion later on
-	shapes: [],
+const shapes = [];
 
-	/*
+/*
     objA: {
         posX: 0, // doing positions outside of arrays because I feel it's simpler for me to understand, it is slightly less efficient though
         posY: 0,
@@ -202,157 +200,153 @@ let mesh = {
     },
     */
 
-	doCollisions() {
-		let totalCollisions = 0;
+function doCollisions() {
+	let totalCollisions = 0;
 
-		for (let i = 0; i < mesh.shapes.length; i++) {
-			for (let j = i + 1; j < mesh.shapes.length; j++) {
-				let collision = "";
-				switch (mesh.shapes[i].objId + ":" + mesh.shapes[j].objId) {
-					case "circ:circ": {
-						collision = this.CC(mesh.shapes[i], mesh.shapes[j]);
-						break;
-					}
-
-					case "circ:rect": {
-						collision = this.CR(mesh.shapes[i], mesh.shapes[j]);
-						break;
-					}
-
-					case "rect:circ": {
-						collision = this.CR(mesh.shapes[j], mesh.shapes[i]);
-						break;
-					}
-
-					case "rect:rect": {
-						collision = this.RR(mesh.shapes[i], mesh.shapes[j]);
-						break;
-					}
+	for (let i = 0; i < shapes.length; i++) {
+		for (let j = i + 1; j < shapes.length; j++) {
+			let collision = "";
+			switch (shapes[i].objId + ":" + shapes[j].objId) {
+				case "circ:circ": {
+					collision = this.CC(shapes[i], shapes[j]);
+					break;
 				}
-				if (!(collision == "")) {
-					totalCollisions += 1;
+
+				case "circ:rect": {
+					collision = this.CR(shapes[i], shapes[j]);
+					break;
+				}
+
+				case "rect:circ": {
+					collision = this.CR(shapes[j], shapes[i]);
+					break;
+				}
+
+				case "rect:rect": {
+					collision = this.RR(shapes[i], shapes[j]);
+					break;
 				}
 			}
-		}
-		resultParagraph.textContent = `Total collisions: ${totalCollisions}`;
-	},
-
-	// ===================
-	// COLLISION FUNCTIONS
-	// ===================
-
-	CC(a, b) {
-		const dX = a.posX - b.posX;
-		const dY = a.posY - b.posY;
-
-		const radii = a.size + b.size;
-
-		const hypot = Math.sqrt(dX * dX + dY * dY);
-
-		console.log(
-			`Checking circles: distance=${hypot.toFixed(
-				2
-			)}, radii sum=${radii}, colliding=${hypot < radii}`
-		);
-
-		if (hypot < radii) {
-			return "circ:circ";
-		} else {
-			return "";
-		}
-	},
-
-	CR(a, b) {
-		const rectTL = [b.posX, b.posY];
-		const rectTR = [b.posX + b.size[0], b.posY];
-		const rectBL = [b.posX, b.posY + b.size[1]];
-		const rectBR = [b.posX + b.size[0], b.posY + b.size[1]];
-		let closestPoint = [0, 0];
-
-		// Find the closest point to the circle that is on the rectangle
-		if (a.posX > rectTR[0]) {
-			if (a.posY < rectTR[1]) {
-				closestPoint = rectTR;
-			} else if (a.posY > rectBR[1]) {
-				closestPoint = rectBR;
-			} else {
-				closestPoint = [rectTR[0], a.posY];
-			}
-		} else if (a.posX < rectTL[0]) {
-			if (a.posY < rectTL[1]) {
-				closestPoint = rectTL;
-			} else if (a.posY > rectBL[1]) {
-				closestPoint = rectBL;
-			} else {
-				closestPoint = [rectTL[1], a.posY];
-			}
-		} else if (a.posY > rectBL[1]) {
-			closestPoint = [a.posX, rectBL[1]];
-		} else if (a.posY < rectTL[1]) {
-			closestPoint = [a.posX, rectTL[1]];
-		} else {
-			closestPoint = [a.posX, a.posY];
-		}
-
-		const dx = a.posX - closestPoint[0];
-		const dy = a.posY - closestPoint[1];
-
-		const hypot = Math.sqrt(dx * dx + dy * dy);
-
-		if (hypot < a.size) {
-			return "circ:rect";
-		} else {
-			return "";
-		}
-	},
-
-	RR(a, b) {
-		let aRectangleTopLeft = [a.posX, a.posY];
-		let aRectangleTopRight = [a.posX + a.size[0], a.posY];
-		let aRectangleBottomLeft = [a.posX, a.posY + a.size[1]];
-		let aRectangleBottomRight = [a.posX + a.size[0], a.posY + a.size[1]];
-
-		let rectA = [
-			aRectangleTopLeft,
-			aRectangleTopRight,
-			aRectangleBottomLeft,
-			aRectangleBottomRight,
-		];
-
-		let bRectangleTopLeft = [b.posX, b.posY];
-		let bRectangleTopRight = [b.posX + b.size[0], b.posY];
-		let bRectangleBottomLeft = [b.posX, b.posY + b.size[1]];
-		// we don't need the last corner, because the checks only check for where the corners are relative to other corners, and three corners are enough to define a rectangle
-
-		let rectB = [
-			bRectangleTopLeft,
-			bRectangleTopRight,
-			bRectangleBottomLeft,
-		];
-
-		for (corner of rectA) {
-			// check each corner
-			if (
-				//is that corner inside the other rectangle
-				corner[0] > bRectangleTopLeft[0] &&
-				corner[0] < bRectangleTopRight[0] &&
-				corner[1] < bRectangleBottomLeft[1] &&
-				corner[1] > bRectangleTopLeft[1]
-			) {
-				return "rect:rect";
+			if (!(collision == "")) {
+				totalCollisions += 1;
 			}
 		}
-		for (let corner of rectB) {
-			// same here
-			if (
-				corner[0] > aRectangleTopLeft[0] &&
-				corner[0] < aRectangleTopRight[0] &&
-				corner[1] > aRectangleTopLeft[1] &&
-				corner[1] < aRectangleBottomLeft[1]
-			) {
-				return "rect:rect";
-			}
-		}
+	}
+	resultParagraph.textContent = `Total collisions: ${totalCollisions}`;
+}
+
+// ===================
+// COLLISION FUNCTIONS
+// ===================
+
+function CC(a, b) {
+	const dX = a.posX - b.posX;
+	const dY = a.posY - b.posY;
+
+	const radii = a.size + b.size;
+
+	const hypot = Math.sqrt(dX * dX + dY * dY);
+
+	console.log(
+		`Checking circles: distance=${hypot.toFixed(
+			2
+		)}, radii sum=${radii}, colliding=${hypot < radii}`
+	);
+
+	if (hypot < radii) {
+		return "circ:circ";
+	} else {
 		return "";
-	},
-};
+	}
+}
+
+function CR(a, b) {
+	const rectTL = [b.posX, b.posY];
+	const rectTR = [b.posX + b.size[0], b.posY];
+	const rectBL = [b.posX, b.posY + b.size[1]];
+	const rectBR = [b.posX + b.size[0], b.posY + b.size[1]];
+	let closestPoint = [0, 0];
+
+	// Find the closest point to the circle that is on the rectangle
+	if (a.posX > rectTR[0]) {
+		if (a.posY < rectTR[1]) {
+			closestPoint = rectTR;
+		} else if (a.posY > rectBR[1]) {
+			closestPoint = rectBR;
+		} else {
+			closestPoint = [rectTR[0], a.posY];
+		}
+	} else if (a.posX < rectTL[0]) {
+		if (a.posY < rectTL[1]) {
+			closestPoint = rectTL;
+		} else if (a.posY > rectBL[1]) {
+			closestPoint = rectBL;
+		} else {
+			closestPoint = [rectTL[1], a.posY];
+		}
+	} else if (a.posY > rectBL[1]) {
+		closestPoint = [a.posX, rectBL[1]];
+	} else if (a.posY < rectTL[1]) {
+		closestPoint = [a.posX, rectTL[1]];
+	} else {
+		closestPoint = [a.posX, a.posY];
+	}
+
+	const dx = a.posX - closestPoint[0];
+	const dy = a.posY - closestPoint[1];
+
+	const hypot = Math.sqrt(dx * dx + dy * dy);
+
+	if (hypot < a.size) {
+		return "circ:rect";
+	} else {
+		return "";
+	}
+}
+
+function RR(a, b) {
+	let aRectangleTopLeft = [a.posX, a.posY];
+	let aRectangleTopRight = [a.posX + a.size[0], a.posY];
+	let aRectangleBottomLeft = [a.posX, a.posY + a.size[1]];
+	let aRectangleBottomRight = [a.posX + a.size[0], a.posY + a.size[1]];
+
+	let rectA = [
+		aRectangleTopLeft,
+		aRectangleTopRight,
+		aRectangleBottomLeft,
+		aRectangleBottomRight,
+	];
+
+	let bRectangleTopLeft = [b.posX, b.posY];
+	let bRectangleTopRight = [b.posX + b.size[0], b.posY];
+	let bRectangleBottomLeft = [b.posX, b.posY + b.size[1]];
+	// we don't need the last corner, because the checks only check for where the corners are relative to other corners, and three corners are enough to define a rectangle
+
+	let rectB = [bRectangleTopLeft, bRectangleTopRight, bRectangleBottomLeft];
+
+	for (corner of rectA) {
+		// check each corner
+		if (
+			//is that corner inside the other rectangle
+			corner[0] > bRectangleTopLeft[0] &&
+			corner[0] < bRectangleTopRight[0] &&
+			corner[1] < bRectangleBottomLeft[1] &&
+			corner[1] > bRectangleTopLeft[1]
+		) {
+			return "rect:rect";
+		}
+	}
+	for (let corner of rectB) {
+		// same here
+		if (
+			corner[0] > aRectangleTopLeft[0] &&
+			corner[0] < aRectangleTopRight[0] &&
+			corner[1] > aRectangleTopLeft[1] &&
+			corner[1] < aRectangleBottomLeft[1]
+		) {
+			return "rect:rect";
+		}
+	}
+	return "";
+}
+//};
