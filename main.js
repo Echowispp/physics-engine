@@ -32,9 +32,19 @@ function doPhysics() {
 			 Type: ${shape.objId}, 
 			 Grounded: ${shape.onGround}`
 		);*/
-		if (shape.onGround == false && shape.gravity == true) {
-			shape.velocityY += gravity;
+		if (shape.physics == false) {
+			continue;
 		}
+
+		if (shape.onGround == false) {
+			shape.velocityY += (gravity / shape.mass) * 100;
+		}
+
+		shape.velocityX += shape.forceX / shape.mass;
+		shape.velocityY += shape.forceY / shape.mass;
+
+		shape.forceX = 0;
+		shape.forceY = 0;
 
 		if (shape.objId == "circ") {
 			shape.posX = Math.min(
@@ -45,8 +55,12 @@ function doPhysics() {
 				shape.posY + shape.velocityY,
 				canvas.height - shape.size
 			);
-			if (shape.posY <= canvas.height - shape.size) {
-				shape.onground = true;
+			shape.posX = Math.max(shape.posX, 0 + shape.size);
+			shape.posY = Math.max(shape.posY, 0 + shape.size);
+			if (shape.posY > canvas.height - shape.size) {
+				shape.velocityY = 0;
+				shape.posY = canvas.height - shape.size;
+				shape.onGround = true;
 			}
 		}
 
@@ -59,12 +73,16 @@ function doPhysics() {
 				shape.posY + shape.velocityY,
 				canvas.height - shape.size[1]
 			);
-			if (shape.posY <= canvas.height - shape.size[1]) {
-				shape.onground = true;
+			shape.posX = Math.max(shape.posX, 0);
+			shape.posY = Math.max(shape.posY, 0);
+			if (shape.posY > canvas.height - shape.size[1]) {
+				shape.velocityY = 0;
+				shape.posY = canvas.height - shape.size[1];
+				shape.onGround = true;
 			}
-			if (shape.posX <= canvas.width - shape.size[0]) {
-				console.log("out of bounds!");
-			}
+			//if (shape.posX < canvas.width - shape.size[0]) {
+			//	console.log("out of bounds!");
+			//}
 		}
 		/*console.log(
 			`Shape post physics:
@@ -95,13 +113,13 @@ window.addEventListener("load", () => {
 
 function loop() {
 	requestAnimationFrame(loop);
+	// console.clear();
 
-	//console.log(`
-	//	New frame!
-	//	`);
+	// console.log(`frameLoops: ${frameLoops}`);
 
 	doCollisions();
 	doPhysics();
+
 	reDraw();
 }
 
@@ -118,13 +136,14 @@ function onRectButtonPressed() {
 }
 
 function toggleGravity() {
-	console.log(`button pressed, gravityToggle pre-changes: ${gravityToggle}`);
 	if (gravityToggle == true) {
+		console.log("gravityToggle == true, setting to false!");
 		gravityToggle = false;
 	} else if (gravityToggle == false) {
+		console.log("gravityToggle == false, setting to true!");
 		gravityToggle = true;
 	}
-	console.log(`button pressed, gravityToggle post-changes: ${gravityToggle}`);
+	console.log(`gravityToggle: ${gravityToggle}`);
 
 	toggleParagraph.textContent = `Gravity for next placed object: ${gravityToggle}`;
 }
@@ -165,17 +184,28 @@ canvas.addEventListener("click", function (event) {
 		objId: null,
 		velocityX: null,
 		velocityY: null,
+		forceX: 0,
+		forceY: 0,
+		mass: null,
 		onGround: false,
-		gravity: gravityToggle,
+		physics: gravityToggle,
 	};
 
 	shapes.push(object);
 
+	const radius = 40;
 	if (selectedShape == "circ") {
-		var radius = 40;
+		let posX = Math.min(mouseX, canvas.height - radius);
+		let posY = Math.min(mouseY, canvas.height - radius);
+		if (posX < 0) {
+			posX = 0;
+		}
+		if (posY < 0) {
+			posY = 0;
+		}
 
 		ctx.beginPath();
-		ctx.arc(mouseX, mouseY, radius, 0, 2 * Math.PI);
+		ctx.arc(posX, posY, radius, 0, 2 * Math.PI);
 		ctx.fill();
 
 		object.posX = mouseX;
@@ -184,11 +214,22 @@ canvas.addEventListener("click", function (event) {
 		object.objId = "circ";
 		object.velocityX = 0;
 		object.velocityY = 0;
+		object.mass = Math.PI * radius ** 2;
 	} else if (selectedShape == "rect") {
-		let sizeX = 70;
-		let sizeY = 50;
+		let sizeX = Math.sqrt(Math.PI) * radius;
+		let sizeY = sizeX;
 
-		ctx.fillRect(mouseX, mouseY, sizeX, sizeY);
+		// Make sure the shape inside the canvas bounds
+		let posX = Math.min(mouseX, canvas.height - sizeX);
+		let posY = Math.min(mouseY, canvas.height - sizeY);
+		if (posX < 0) {
+			posX = 0;
+		}
+		if (posY < 0) {
+			posY = 0;
+		}
+
+		ctx.fillRect(posX, posY, sizeX, sizeY);
 
 		object.posX = mouseX;
 		object.posY = mouseY;
@@ -196,7 +237,9 @@ canvas.addEventListener("click", function (event) {
 		object.objId = "rect";
 		object.velocityX = 0;
 		object.velocityY = 0;
+		object.mass = sizeX * sizeY;
 	}
+	console.log("object.physics: ", object.physics);
 });
 
 const shapes = [];
@@ -214,7 +257,11 @@ const shapes = [];
         size: 0,
         objId: "",
     },
-    */
+*/
+
+//============
+// COLLISIONS
+//============
 
 function doCollisions() {
 	let totalCollisions = 0;
@@ -251,19 +298,24 @@ function doCollisions() {
 	resultParagraph.textContent = `Total collisions: ${totalCollisions}`;
 }
 
-// ===================
-// COLLISION FUNCTIONS
-// ===================
-
 function CC(a, b) {
-	const dX = a.posX - b.posX;
-	const dY = a.posY - b.posY;
+	const dx = a.posX - b.posX;
+	const dy = a.posY - b.posY;
 
 	const radii = a.size + b.size;
 
-	const hypot = Math.sqrt(dX * dX + dY * dY);
+	const hypot = Math.sqrt(dx * dx + dy * dy);
 
 	if (hypot < radii) {
+		if (a.physics) {
+			a.posX -= a.velocityX;
+			a.posY -= a.velocityY;
+		}
+		if (b.physics) {
+			b.posX -= b.velocityX;
+			b.posY -= b.velocityY;
+		}
+
 		return "circ:circ";
 	} else {
 		return "";
@@ -277,7 +329,7 @@ function CR(a, b) {
 	const rectBR = [b.posX + b.size[0], b.posY + b.size[1]];
 	let closestPoint = [0, 0];
 
-	// Find the closest point to the circle that is on the rectangle
+	// Find the point out of the points on the rectangle that is the closest to the circle
 	if (a.posX > rectTR[0]) {
 		if (a.posY < rectTR[1]) {
 			closestPoint = rectTR;
@@ -308,6 +360,15 @@ function CR(a, b) {
 	const hypot = Math.sqrt(dx * dx + dy * dy);
 
 	if (hypot < a.size) {
+		if (a.physics) {
+			a.posX -= a.velocityX;
+			a.posY -= a.velocityY;
+		}
+		if (b.physics) {
+			b.posX -= b.velocityX;
+			b.posY -= b.velocityY;
+		}
+
 		return "circ:rect";
 	} else {
 		return "";
@@ -343,6 +404,15 @@ function RR(a, b) {
 			corner[1] < bRectangleBottomLeft[1] &&
 			corner[1] > bRectangleTopLeft[1]
 		) {
+			if (a.physics) {
+				a.posX -= a.velocityX;
+				a.posY -= a.velocityY;
+			}
+			if (b.physics) {
+				b.posX -= b.velocityX;
+				b.posY -= b.velocityY;
+			}
+
 			return "rect:rect";
 		}
 	}
@@ -354,6 +424,24 @@ function RR(a, b) {
 			corner[1] > aRectangleTopLeft[1] &&
 			corner[1] < aRectangleBottomLeft[1]
 		) {
+			const rectangleAMiddle = [
+				a[0] + a.size[0] / 2, // halfway to the other end = middle
+				a[1] + a.size[1] / 2,
+			];
+			const rectangleBMiddle = [
+				b[0] + b.size[0] / 2, // halfway to the other end = middle
+				b[1] + b.size[1] / 2,
+			];
+
+			const dx = rectangleAMiddle[0] - rectangleBMiddle[0];
+			const dy = rectangleAMiddle[1] - rectangleBMiddle[1];
+
+			a.velocityX -= dx / 2;
+			a.velocityY -= dy / 2;
+
+			b.velocityX -= dx / 2;
+			b.velocityY -= dy / 2;
+
 			return "rect:rect";
 		}
 	}
