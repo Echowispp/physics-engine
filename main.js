@@ -15,6 +15,8 @@ let mouseY = 0;
 
 let gravityToggle = true;
 
+const shapes = [];
+
 //=========
 // PHYSICS
 //=========
@@ -108,6 +110,9 @@ function resizeCanvas() {
 
 window.addEventListener("load", () => {
 	requestAnimationFrame(resizeCanvas);
+
+	requestAnimationFrame(initShapes);
+
 	requestAnimationFrame(loop);
 });
 
@@ -121,6 +126,40 @@ function loop() {
 	doPhysics();
 
 	reDraw();
+}
+
+function initShapes() {
+	// atm just mak
+	sizeX = 70;
+	sizeY = 50;
+	for (let i = 0; i < Math.floor(canvas.width / sizeX) + 1; i++) {
+		shapes[i] = {
+			posX: i * sizeX,
+			posY: canvas.height - sizeY,
+			size: [sizeX, sizeY],
+			objId: "rect",
+			velocityX: 0,
+			velocityY: 0,
+			forceX: 0,
+			forceY: 0,
+			mass: sizeX * sizeY,
+			onGround: false,
+			physics: false,
+		};
+	}
+	shapes[shapes.length] = {
+		posX: 0.3 * canvas.width,
+		posY: 0.8 * canvas.height,
+		size: [sizeX, sizeY],
+		objId: "rect",
+		velocityX: 0,
+		velocityY: 0,
+		forceX: 0,
+		forceY: 0,
+		mass: sizeX * sizeY,
+		onGround: false,
+		physics: false,
+	};
 }
 
 //=======
@@ -241,8 +280,6 @@ canvas.addEventListener("click", function (event) {
 	}
 	console.log("object.physics: ", object.physics);
 });
-
-const shapes = [];
 
 /*
     objA: {
