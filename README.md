@@ -2,11 +2,11 @@
 
 This is a simple program that simulates circles and rectangles moving around.
 
-Pretty simple to use, just click one of the buttons to select a shape, then click on the canvas (darkish gray area) to place a shape. Also, you can move the circle wityh WASD to see how it reacts or collides with other shapes.
+Pretty simple to use, just click one of the buttons to select a shape, then click on the canvas (darkish gray area) to place a shape. Also, you can move the circle with WASD to see how it reacts or collides with other shapes.
 
 <a href="https://physics-engine-black.vercel.app/">Demo</a>
 
-This is a very simple physics sim/engine that does cut a lot of corners, but uhh yeah it simulates basic collisions. It doesnt have rotations or anything, gets sorta laggy at high object counts and doesn't have a whole lot of space for testing (the small space helps keep the performance better, since there ends up being less objects usually)
+This is a very simple physics sim/engine that does cut a lot of corners, but uhh yeah it simulates basic collisions. It doesnt have rotations or anything, might get slightly laggy at high object counts and doesn't have a whole lot of space for testing (the small space helps keep the performance better, since there ends up being less objects)
 
 Just as a disclaimer, this isn't trying to be anything fancy - the point is to show that a physics engine can be made with just plain JS and HTML5, and nothing else
 
