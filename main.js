@@ -271,8 +271,6 @@ canvas.addEventListener("click", function (event) {
 	mouseX = event.clientX - rect.left;
 	mouseY = event.clientY - rect.top;
 
-	ctx.fillStyle = "#a20";
-
 	let object = {
 		posX: null,
 		posY: null,

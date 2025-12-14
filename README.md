@@ -1,19 +1,14 @@
-# Collision detector
+# Physics engine
 
-This is a simple program that detects if two shapes are touching.
+This is a simple program that simulates circles and rectangles moving around.
 
-Pretty simple to use, just click one of the buttons to select a shape, then click on the canvas (darkish gray area) to place a shape. After that, place another shape. Then, the program will detect the second shape and check for collisions.
+Pretty simple to use, just click one of the buttons to select a shape, then click on the canvas (darkish gray area) to place a shape. Also, you can move the circle wityh WASD to see how it reacts or collides with other shapes.
 
 <a href="https://physics-engine-black.vercel.app/">Demo</a>
 
-About the week's theme it's fine if this doesn't count I understand it is kind of on the edge of counting as a 'framework'... now that I think about it, this really doesn't fit too well, it could be argued this is a framework for building a physics engine. This project was going to be a full-on physics engine before I realised that would've been way too much for me in one week, especially as I had a bunch of school stuff this week. Hence the repo name. I want to continue this project later at some point though, maybe during a later siege week, maybe after siege, maybe I'll forget to update this
+This is a very simple physics sim/engine that does cut a lot of corners, but uhh yeah it simulates basic collisions. It doesnt have rotations or anything, gets very laggy at high object counts and doesn't have a whole lot of space for testing (the small space helps keep the performance better, since there ends up being less objects usually)
 
-<h1>Tech stack</h1>
-
-1. I did a simple framework to build off of later, can be seen in the first commit. It includes the doCollisions function (not the collision functions, just the switch that checks which collision function to call) and the basic static HTML/CSS layout
-2. With the framework in place I did some work on figuring out canvases and drawing on them, after doing some research I figured out the arc() method works for making a circle.
-3. After that, I fixed a couple minor bugs and added the current grid layout to the page, along with the rectangle button
-4. The collision functions basically get the rectangle corners and then check for different positions relative to them, do some math and plop out the answers idk how to explain it
+Just as a disclaimer, this isn't trying to be anything fancy - the point is to show that a physics engine can be amde with just plain JS and HTML5, and nothing else
 
 # Credits
 
