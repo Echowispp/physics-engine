@@ -6,9 +6,9 @@ Pretty simple to use, just click one of the buttons to select a shape, then clic
 
 <a href="https://physics-engine-black.vercel.app/">Demo</a>
 
-This is a very simple physics sim/engine that does cut a lot of corners, but uhh yeah it simulates basic collisions. It doesnt have rotations or anything, gets very laggy at high object counts and doesn't have a whole lot of space for testing (the small space helps keep the performance better, since there ends up being less objects usually)
+This is a very simple physics sim/engine that does cut a lot of corners, but uhh yeah it simulates basic collisions. It doesnt have rotations or anything, gets sorta laggy at high object counts and doesn't have a whole lot of space for testing (the small space helps keep the performance better, since there ends up being less objects usually)
 
-Just as a disclaimer, this isn't trying to be anything fancy - the point is to show that a physics engine can be amde with just plain JS and HTML5, and nothing else
+Just as a disclaimer, this isn't trying to be anything fancy - the point is to show that a physics engine can be made with just plain JS and HTML5, and nothing else
 
 # Credits
 
