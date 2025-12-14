@@ -15,35 +15,42 @@ let mouseY = 0;
 
 let gravityToggle = true;
 
+let ongoingTimeOut = false;
+
+const keys = {};
+
 const shapes = [];
 
 //=========
 // PHYSICS
 //=========
 
-const gravity = 0.5;
+let gravity = 0;
 
 function doPhysics() {
+	gravity = canvas.height * 0.0008;
 	for (let shape of shapes) {
-		/*console.log(
-			`Shape pre physics:
-
-			Position: (${shape.posX}, ${shape.posY}),
-			 Velocity: (${shape.velocityX}, ${shape.velocityY}), 
-			 Size: ${shape.size}, 
-			 Type: ${shape.objId}, 
-			 Grounded: ${shape.onGround}`
-		);*/
 		if (shape.physics == false) {
 			continue;
 		}
 
 		if (shape.onGround == false) {
-			shape.velocityY += (gravity / shape.mass) * 100;
+			shape.forceY += gravity; // idk I could just get rid of the force stuff altogether but this makes it feel fancier
+		} else if (!ongoingTimeOut) {
+			ongoingTimeOut = true;
+			setTimeout(() => {
+				shape.onGround = false;
+				ongoingTimeOut = false;
+			}, 300);
 		}
 
-		shape.velocityX += shape.forceX / shape.mass;
-		shape.velocityY += shape.forceY / shape.mass;
+		if (shape.velocityX < shape.maxSpeed / 60) {
+			shape.velocityX += shape.forceX;
+		} else if (-1 * shape.velocityX < shape.maxSpeed / 60) {
+			shape.velocityX += shape.forceX;
+		}
+
+		shape.velocityY += shape.forceY;
 
 		shape.forceX = 0;
 		shape.forceY = 0;
@@ -82,19 +89,7 @@ function doPhysics() {
 				shape.posY = canvas.height - shape.size[1];
 				shape.onGround = true;
 			}
-			//if (shape.posX < canvas.width - shape.size[0]) {
-			//	console.log("out of bounds!");
-			//}
 		}
-		/*console.log(
-			`Shape post physics:
-
-			Position: (${shape.posX}, ${shape.posY}),
-			 Velocity: (${shape.velocityX}, ${shape.velocityY}), 
-			 Size: ${shape.size}, 
-			 Type: ${shape.objId}
-			 Grounded: ${shape.onGround}`
-		);*/
 	}
 }
 
@@ -118,10 +113,8 @@ window.addEventListener("load", () => {
 
 function loop() {
 	requestAnimationFrame(loop);
-	// console.clear();
 
-	// console.log(`frameLoops: ${frameLoops}`);
-
+	updateMovement();
 	doCollisions();
 	doPhysics();
 
@@ -129,12 +122,13 @@ function loop() {
 }
 
 function initShapes() {
-	// atm just mak
-	sizeX = 70;
-	sizeY = 50;
-	for (let i = 0; i < Math.floor(canvas.width / sizeX) + 1; i++) {
+	const sizeX = 0.07 * canvas.width;
+	const sizeY = 0.08 * canvas.width;
+	const radius = 0.05 * canvas.width;
+
+	for (let i = 0; i < Math.floor(canvas.width / sizeX) + 2; i++) {
 		shapes[i] = {
-			posX: i * sizeX,
+			posX: i * sizeX - 5 * i, //second bit is so the little gaps get covered
 			posY: canvas.height - sizeY,
 			size: [sizeX, sizeY],
 			objId: "rect",
@@ -142,23 +136,59 @@ function initShapes() {
 			velocityY: 0,
 			forceX: 0,
 			forceY: 0,
-			mass: sizeX * sizeY,
 			onGround: false,
 			physics: false,
 		};
 	}
 	shapes[shapes.length] = {
 		posX: 0.3 * canvas.width,
-		posY: 0.8 * canvas.height,
+		posY: 0.6 * canvas.height,
 		size: [sizeX, sizeY],
 		objId: "rect",
 		velocityX: 0,
 		velocityY: 0,
 		forceX: 0,
 		forceY: 0,
-		mass: sizeX * sizeY,
 		onGround: false,
 		physics: false,
+	};
+	shapes[shapes.length] = {
+		posX: 0.5 * canvas.width,
+		posY: 0.5 * canvas.height,
+		size: [sizeX, sizeY],
+		objId: "rect",
+		velocityX: 0,
+		velocityY: 0,
+		forceX: 0,
+		forceY: 0,
+		onGround: false,
+		physics: false,
+	};
+	shapes[shapes.length] = {
+		posX: 0.8 * canvas.width,
+		posY: 0.2 * canvas.height,
+		size: [sizeX, sizeY],
+		objId: "rect",
+		velocityX: 0,
+		velocityY: 0,
+		forceX: 0,
+		forceY: 0,
+		onGround: false,
+		physics: false,
+	};
+	shapes[shapes.length] = {
+		posX: 0,
+		posY: 0,
+		size: radius,
+		objId: "circ",
+		velocityX: 0,
+		velocityY: 0,
+		forceX: 0,
+		forceY: 0,
+		onGround: false,
+		physics: true,
+		movement: true,
+		maxSpeed: canvas.width * 0.8, // in px/min
 	};
 }
 
@@ -176,15 +206,42 @@ function onRectButtonPressed() {
 
 function toggleGravity() {
 	if (gravityToggle == true) {
-		console.log("gravityToggle == true, setting to false!");
 		gravityToggle = false;
 	} else if (gravityToggle == false) {
-		console.log("gravityToggle == false, setting to true!");
 		gravityToggle = true;
 	}
-	console.log(`gravityToggle: ${gravityToggle}`);
 
 	toggleParagraph.textContent = `Gravity for next placed object: ${gravityToggle}`;
+}
+
+window.addEventListener("keydown", (e) => {
+	if (e.key === " ") {
+		for (let shape of shapes) {
+			if (shape.movement && shape.onGround) {
+				shape.velocityY = -25 * gravity;
+			}
+		}
+	} else {
+		keys[e.key] = true;
+	}
+});
+
+window.addEventListener("keyup", (e) => {
+	keys[e.key] = false;
+});
+
+function updateMovement() {
+	for (let shape of shapes) {
+		if (!shape.movement) continue;
+
+		if (keys["a"] && !keys["d"]) {
+			shape.velocityX = -shape.maxSpeed / 60;
+		} else if (keys["d"] && !keys["a"]) {
+			shape.velocityX = shape.maxSpeed / 60;
+		} else {
+			shape.velocityX = 0;
+		}
+	}
 }
 
 // ===============
@@ -225,14 +282,14 @@ canvas.addEventListener("click", function (event) {
 		velocityY: null,
 		forceX: 0,
 		forceY: 0,
-		mass: null,
 		onGround: false,
 		physics: gravityToggle,
 	};
 
 	shapes.push(object);
 
-	const radius = 40;
+	const radius = 0.05 * canvas.width;
+
 	if (selectedShape == "circ") {
 		let posX = Math.min(mouseX, canvas.height - radius);
 		let posY = Math.min(mouseY, canvas.height - radius);
@@ -253,7 +310,6 @@ canvas.addEventListener("click", function (event) {
 		object.objId = "circ";
 		object.velocityX = 0;
 		object.velocityY = 0;
-		object.mass = Math.PI * radius ** 2;
 	} else if (selectedShape == "rect") {
 		let sizeX = Math.sqrt(Math.PI) * radius;
 		let sizeY = sizeX;
@@ -276,9 +332,7 @@ canvas.addEventListener("click", function (event) {
 		object.objId = "rect";
 		object.velocityX = 0;
 		object.velocityY = 0;
-		object.mass = sizeX * sizeY;
 	}
-	console.log("object.physics: ", object.physics);
 });
 
 /*
@@ -347,10 +401,22 @@ function CC(a, b) {
 		if (a.physics) {
 			a.posX -= a.velocityX;
 			a.posY -= a.velocityY;
+			a.velocityX = 0;
+			a.velocityY = 0;
+
+			if (Math.abs(dy) > Math.abs(dx) && dy < 0) {
+				a.onGround = true;
+			}
 		}
 		if (b.physics) {
 			b.posX -= b.velocityX;
 			b.posY -= b.velocityY;
+			b.velocityX = 0;
+			b.velocityY = 0;
+
+			if (Math.abs(dy) > Math.abs(dx) && dy > 0) {
+				b.onGround = true;
+			}
 		}
 
 		return "circ:circ";
@@ -381,7 +447,7 @@ function CR(a, b) {
 		} else if (a.posY > rectBL[1]) {
 			closestPoint = rectBL;
 		} else {
-			closestPoint = [rectTL[1], a.posY];
+			closestPoint = [rectTL[0], a.posY];
 		}
 	} else if (a.posY > rectBL[1]) {
 		closestPoint = [a.posX, rectBL[1]];
@@ -398,12 +464,26 @@ function CR(a, b) {
 
 	if (hypot < a.size) {
 		if (a.physics) {
-			a.posX -= a.velocityX;
-			a.posY -= a.velocityY;
+			if (Math.abs(dy) > Math.abs(dx)) {
+				a.posY -= a.velocityY;
+				a.velocityY = 0;
+				if (dy < 0) {
+					a.onGround = true;
+				}
+			} else {
+				a.posX -= a.velocityX;
+				a.velocityX = 0;
+			}
 		}
+
 		if (b.physics) {
 			b.posX -= b.velocityX;
 			b.posY -= b.velocityY;
+			b.velocityX = 0;
+			b.velocityY = 0;
+			if (Math.abs(dy) > Math.abs(dx) && dy > 0) {
+				b.onGround = true;
+			}
 		}
 
 		return "circ:rect";
@@ -428,60 +508,71 @@ function RR(a, b) {
 	let bRectangleTopLeft = [b.posX, b.posY];
 	let bRectangleTopRight = [b.posX + b.size[0], b.posY];
 	let bRectangleBottomLeft = [b.posX, b.posY + b.size[1]];
-	// we don't need the last corner, because the checks only check for where the corners are relative to other corners, and three corners are enough to define a rectangle
 
 	let rectB = [bRectangleTopLeft, bRectangleTopRight, bRectangleBottomLeft];
 
 	for (corner of rectA) {
-		// check each corner
 		if (
-			//is that corner inside the other rectangle
 			corner[0] > bRectangleTopLeft[0] &&
 			corner[0] < bRectangleTopRight[0] &&
 			corner[1] < bRectangleBottomLeft[1] &&
 			corner[1] > bRectangleTopLeft[1]
 		) {
+			const dx = a.posX - b.posX;
+			const dy = a.posY - b.posY;
 			if (a.physics) {
 				a.posX -= a.velocityX;
 				a.posY -= a.velocityY;
+				a.velocityX = 0;
+				a.velocityY = 0;
+				if (Math.abs(dy) > Math.abs(dx) && dy < 0) {
+					a.onGround = true;
+				}
 			}
 			if (b.physics) {
 				b.posX -= b.velocityX;
 				b.posY -= b.velocityY;
+				b.velocityX = 0;
+				b.velocityY = 0;
+				if (Math.abs(dy) > Math.abs(dx) && dy > 0) {
+					b.onGround = true;
+				}
 			}
 
 			return "rect:rect";
 		}
 	}
 	for (let corner of rectB) {
-		// same here
 		if (
 			corner[0] > aRectangleTopLeft[0] &&
 			corner[0] < aRectangleTopRight[0] &&
 			corner[1] > aRectangleTopLeft[1] &&
 			corner[1] < aRectangleBottomLeft[1]
 		) {
-			const rectangleAMiddle = [
-				a[0] + a.size[0] / 2, // halfway to the other end = middle
-				a[1] + a.size[1] / 2,
-			];
-			const rectangleBMiddle = [
-				b[0] + b.size[0] / 2, // halfway to the other end = middle
-				b[1] + b.size[1] / 2,
-			];
+			const dx = a.posX - b.posX;
+			const dy = a.posY - b.posY;
 
-			const dx = rectangleAMiddle[0] - rectangleBMiddle[0];
-			const dy = rectangleAMiddle[1] - rectangleBMiddle[1];
-
-			a.velocityX -= dx / 2;
-			a.velocityY -= dy / 2;
-
-			b.velocityX -= dx / 2;
-			b.velocityY -= dy / 2;
+			if (a.physics) {
+				a.posX -= a.velocityX;
+				a.posY -= a.velocityY;
+				a.velocityX = 0;
+				a.velocityY = 0;
+				if (Math.abs(dy) > Math.abs(dx) && dy < 0) {
+					a.onGround = true;
+				}
+			}
+			if (b.physics) {
+				b.posX -= b.velocityX;
+				b.posY -= b.velocityY;
+				b.velocityX = 0;
+				b.velocityY = 0;
+				if (Math.abs(dy) > Math.abs(dx) && dy > 0) {
+					b.onGround = true;
+				}
+			}
 
 			return "rect:rect";
 		}
 	}
 	return "";
 }
-//};
